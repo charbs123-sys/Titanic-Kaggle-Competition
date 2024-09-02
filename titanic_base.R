@@ -34,3 +34,4 @@ te_log <- predict(logist,x_te, type = "response")
 x_tr
 #newstuff-- this branch is new
 
+#new stuff for this branch
