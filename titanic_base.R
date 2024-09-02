@@ -7,11 +7,11 @@ train <- read.csv("train.csv")
 #cleaning dataset
 train <- train %>% select(-PassengerId,-Name,-Ticket,-Cabin)
 n <- length(train$Cabin)
-for (i in 1:n){
-  if (train$Cabin[i] == ""){
-    train$Cabin[i] = NA
-  }
-}
+#for (i in 1:n){
+#  if (train$Cabin[i] == ""){
+#    train$Cabin[i] = NA
+#  }
+#}
 
 train
 #splitting dataset
