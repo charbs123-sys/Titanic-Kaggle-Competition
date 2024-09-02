@@ -30,4 +30,7 @@ summary(logist)
 x_te <- te %>% select(-Survived)
 te_log <- predict(logist,x_te, type = "response")
 
+
 x_tr
+#newstuff-- this branch is new
+
