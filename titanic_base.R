@@ -9,8 +9,15 @@ train <- train %>% select(-PassengerId,-Name,-Ticket,-Cabin)
 n <- length(train$Cabin)
 train <- train[-which(train$Embarked == ""),]
 
-train_na <- train 
+#mean dataset
+train_mean <- train
+mean_na <- mean(train_mean$Age,na.rm = TRUE)
+train_mean$Age[is.na(train_mean$Age)] <- mean_na
 
+#pairwise dataset
+train_na <- train
+
+#casewise dataset
 train <- train %>% na.omit()
 
 
@@ -61,6 +68,11 @@ split_pair <- split(train_na)
 shuffle_pair <- as.data.frame(split_pair$shuffle)
 (accuracy_pair <- cross_val(10,shuffle_pair))
 
+#mean imputation
+split_mean <- split(train_mean)
+shuffle_mean <- as.data.frame(split_mean$shuffle)
+(accuracy_mean <- cross_val(10,shuffle_mean))
+
 #implement model with highest accuracy
 y_tr <- factor(tr$Survived)
 x_tr <- tr %>% select(-Survived)
@@ -78,4 +90,5 @@ te_log <- predict(logist,x_te, type = "response")
 outcomes <- factor(ifelse(te_log > 0.5,1,0))
 y_te <- factor(te$Survived)
 (conf <- confusionMatrix(y_te,outcomes))
+
 
