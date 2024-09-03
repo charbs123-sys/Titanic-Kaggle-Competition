@@ -7,16 +7,22 @@ train <- read.csv("train.csv")
 #cleaning dataset
 train <- train %>% select(-PassengerId,-Name,-Ticket,-Cabin)
 n <- length(train$Cabin)
-
 train <- train[-which(train$Embarked == ""),]
+
+train_na <- train 
+
 train <- train %>% na.omit()
 
 
+
 #splitting dataset
+split <- function(train){
 splitting <- sample(1:nrow(train),size = 0.8 * nrow(train))
 tr <- train[splitting,]
 te <- train[-splitting,]
 tr_shuffle <- tr[sample(1:nrow(tr)),]
+return(list(train = tr, test = te, shuffle = tr_shuffle))
+}
 
 #cross validation
 
@@ -45,8 +51,15 @@ cross_val <- function(k,tr_shuffle){
   return(class_avg)
 }
 
-(accuracy_casewise <- cross_val(10,tr_shuffle))
+#casewise deletion
+splitted <- split(train)
+shuffle <- as.data.frame(splitted$shuffle)
+(accuracy_casewise <- cross_val(10,shuffle))
 
+#pairwise deletion
+split_pair <- split(train_na)
+shuffle_pair <- as.data.frame(split_pair$shuffle)
+(accuracy_pair <- cross_val(10,shuffle_pair))
 
 #implement model with highest accuracy
 y_tr <- factor(tr$Survived)
