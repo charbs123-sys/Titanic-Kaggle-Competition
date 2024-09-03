@@ -17,6 +17,17 @@ train_mean$Age[is.na(train_mean$Age)] <- mean_na
 #pairwise dataset
 train_na <- train
 
+#regression dataset
+train_regress <- train
+train_regress$Age <- floor(train_regress$Age)
+train_tr <- train[!is.na(train_regress$Age),]
+train_te <- train[is.na(train_regress$Age),]
+
+regress_1 <- lm(Age ~ ., data = train_tr) #linear regression is not appropriate (negative values present)
+
+pred_1 <- predict(regress_1,train_te)
+train_regress$Age[is.na(train_regress$Age)] <- pred_1
+
 #casewise dataset
 train <- train %>% na.omit()
 
@@ -73,22 +84,27 @@ split_mean <- split(train_mean)
 shuffle_mean <- as.data.frame(split_mean$shuffle)
 (accuracy_mean <- cross_val(10,shuffle_mean))
 
+#regression imputation
+split_regress <- split(train_regress)
+shuffle_regress <- as.data.frame(split_regress$shuffle)
+(accuracy_regress <- cross_val(10,shuffle_regress))
+
 #implement model with highest accuracy
-y_tr <- factor(tr$Survived)
-x_tr <- tr %>% select(-Survived)
+#y_tr <- factor(tr$Survived)
+#x_tr <- tr %>% select(-Survived)
 
-logist <- glm(factor(Survived) ~ ., tr, family = binomial)
-summary(logist)
+#logist <- glm(factor(Survived) ~ ., tr, family = binomial)
+#summary(logist)
 
 
-x_te <- te %>% select(-Survived)
-te_log <- predict(logist,x_te, type = "response")
+#x_te <- te %>% select(-Survived)
+#te_log <- predict(logist,x_te, type = "response")
 
 
 
 #determining preformance against test data
-outcomes <- factor(ifelse(te_log > 0.5,1,0))
-y_te <- factor(te$Survived)
-(conf <- confusionMatrix(y_te,outcomes))
+#outcomes <- factor(ifelse(te_log > 0.5,1,0))
+#y_te <- factor(te$Survived)
+#(conf <- confusionMatrix(y_te,outcomes))
 
 
