@@ -8,8 +8,9 @@ train <- read.csv("train.csv")
 train <- train %>% select(-PassengerId,-Name,-Ticket,-Cabin)
 n <- length(train$Cabin)
 
-train <- train %>% na.omit()
 train <- train[-which(train$Embarked == ""),]
+train <- train %>% na.omit()
+
 
 #splitting dataset
 splitting <- sample(1:nrow(train),size = 0.8 * nrow(train))
@@ -44,7 +45,7 @@ cross_val <- function(k,tr_shuffle){
   return(class_avg)
 }
 
-accuracy_casewise <- cross_val(10,tr_shuffle)
+(accuracy_casewise <- cross_val(10,tr_shuffle))
 
 
 #implement model with highest accuracy
