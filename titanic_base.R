@@ -28,6 +28,30 @@ regress_1 <- lm(Age ~ ., data = train_tr) #linear regression is not appropriate 
 pred_1 <- predict(regress_1,train_te)
 train_regress$Age[is.na(train_regress$Age)] <- pred_1
 
+#Last observation carried forward (LOCF) dataset -> averaging observations with similar properties
+train_L <- train
+
+train_NA <- train_L[is.na(train_L$Age),]
+
+train_NNA <- train_L %>% group_by(Survived,Sex)
+train_NNA <- train_NNA[!is.na(train_NNA$Age),]
+train_sum <- train_NNA %>% summarise(means = mean(Age))
+
+row_exist_NNA <- train_sum %>% select(Survived,Sex)
+row_exists_NA <- train_NA %>% select(Survived,Sex)
+
+empt <- c()
+for (i in 1:nrow(row_exists_NA)){
+  for (j in 1:nrow(row_exist_NNA)){
+    bool <- row_exists_NA[i,] %in% row_exist_NNA[j,]
+    if (bool[1] & bool[2]){
+      empt <- c(empt,train_sum$means[j])
+    } } }
+train_NA <- train_NA %>% select(-Age) %>% mutate(Age = empt)
+train_NNA <- train_NNA %>% ungroup()
+train_L <- rbind(train_NNA,train_NA)
+
+
 #casewise dataset
 train <- train %>% na.omit()
 
@@ -88,6 +112,13 @@ shuffle_mean <- as.data.frame(split_mean$shuffle)
 split_regress <- split(train_regress)
 shuffle_regress <- as.data.frame(split_regress$shuffle)
 (accuracy_regress <- cross_val(10,shuffle_regress))
+
+#LOCF 
+split_LOCF <- split(train_L)
+shuffle_LOCF <- as.data.frame(split_LOCF$shuffle)
+(accuracy_LOCF <- cross_val(10,shuffle_LOCF))
+
+
 
 #implement model with highest accuracy
 #y_tr <- factor(tr$Survived)
