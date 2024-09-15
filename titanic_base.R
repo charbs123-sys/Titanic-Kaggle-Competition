@@ -119,6 +119,9 @@ shuffle_LOCF <- as.data.frame(split_LOCF$shuffle)
 (accuracy_LOCF <- cross_val(10,shuffle_LOCF))
 
 
+#need to implement ML, expectation maximisation, multiple imputation and sensitivity analysis --
+
+
 
 #implement model with highest accuracy
 #y_tr <- factor(tr$Survived)
