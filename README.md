@@ -1,2 +1,1 @@
-#What we aim to acheive
 This project examines the impact of different strategies involving the handling of missing data and how this impacts predictive accuracy. These are extracted from Hyung Kangs article on the prevention and handling of missing data entailing a plethora of methods to achieve the aforementioned goal. The R code is generalised to be used on most datasets and cross validation with a logistic regression is consistently used although machine learning methods such as boosting, SVM, KNN (etc).
