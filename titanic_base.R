@@ -90,7 +90,6 @@ cross_val <- function(k,tr_shuffle,type){
   #implementing k-fold CV
   fold_size <- floor(nrow(tr_shuffle)/k)
   class <- numeric(k)
-  i <- 9
   for(i in 1:k){
     val_indices <- ((i-1) * fold_size + 1): (i * fold_size)
     validation <- tr_shuffle[val_indices,]
