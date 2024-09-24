@@ -3,6 +3,7 @@ library(caret)
 library(MASS)
 library(e1071)
 library(randomForest)
+library(openxlsx)
 #importing datasets
 train <- read.csv("train.csv")
 
@@ -138,22 +139,22 @@ cross_val <- function(k,tr_shuffle,type){
 #casewise deletion
 splitted <- split(train)
 shuffle <- as.data.frame(splitted$shuffle)
-(accuracy_casewise <- cross_val(10,shuffle,"b"))
+(accuracy_casewise <- cross_val(10,shuffle,"r"))
 
 #pairwise deletion
 split_pair <- split(train_na)
 shuffle_pair <- as.data.frame(split_pair$shuffle)
-(accuracy_pair <- cross_val(10,shuffle_pair,"b"))
+(accuracy_pair <- cross_val(10,shuffle_pair,"r"))
 
 #mean imputation
 split_mean <- split(train_mean)
 shuffle_mean <- as.data.frame(split_mean$shuffle)
-(accuracy_mean <- cross_val(10,shuffle_mean,"b"))
+(accuracy_mean <- cross_val(10,shuffle_mean,"r"))
 
 #regression imputation
 split_regress <- split(train_regress)
 shuffle_regress <- as.data.frame(split_regress$shuffle)
-(accuracy_regress <- cross_val(10,shuffle_regress,"b"))
+(accuracy_regress <- cross_val(10,shuffle_regress,"r"))
 
 #LOCF 
 split_LOCF <- split(train_L)
@@ -162,25 +163,45 @@ shuffle_LOCF <- as.data.frame(split_LOCF$shuffle)
 
 
 
+
+
+
 #retrain model with highest accuracy
 
+#final_model <- randomForest(factor(Survived) ~ ., data = train_L, importance = TRUE, proximity = TRUE)
 
-#implement model with highest accuracy
-#y_tr <- factor(tr$Survived)
-#x_tr <- tr %>% dplyr::select(-Survived)
+#test
+#test_final <- read.csv("test.csv")
 
-#logist <- glm(factor(Survived) ~ ., tr, family = binomial)
-#summary(logist)
+#pass_id <- test_final$PassengerId
+#test_final <- test_final %>% dplyr::select(-PassengerId,-Ticket,-Cabin)
+#n <- length(test_final$Cabin)
+#test_final <- test_final %>% mutate(family = SibSp + Parch + 1) %>% dplyr::select(-SibSp,-Parch)
 
+#n <- length(test_final$Name)
+#empt <- c()
+#for (i in 1:n) {
+#  if (grepl("Mr.",test_final$Name[i])) {
+#    empt <- c(empt,"Mr")
+#  } else if (grepl("Miss",test_final$Name[i])) {
+#    empt <- c(empt,"Miss")
+#  } else if (grepl("Mrs",test_final$Name[i])) {
+#    empt <- c(empt,"Mrs")
+#  } else if (grepl("Master",test_final$Name[i])) {
+#    empt <- c(empt,"Master")
+#  } else {
+#    empt <- c(empt,"Rare")
+#  }
+#}
+#test_final <- test_final %>% mutate(title = factor(empt)) %>% dplyr::select(-Name)
 
-#x_te <- te %>% dplyr::select(-Survived)
-#te_log <- predict(logist,x_te, type = "response")
+#mean_na <- mean(test_final$Age,na.rm = TRUE)
+#test_final$Age[is.na(test_final$Age)] <- mean_na
 
+#pred_test <- predict(final_model,newdata = test_final)
+#names(pred_test) <- FALSE
+#final_tibble <- data.frame(PassengerId = pass_id,Survived = pred_test)
+#final_tibble[is.na(final_tibble$Survived),2] <- 1
 
-
-#determining preformance against test data
-#outcomes <- factor(ifelse(te_log > 0.5,1,0))
-#y_te <- factor(te$Survived)
-#(conf <- confusionMatrix(y_te,outcomes))
-
+#temp_file <- write.xlsx(final_tibble, file = "C:\\Users\\User\\Documents\\kag_tables")
 
