@@ -6,9 +6,31 @@ library(e1071)
 train <- read.csv("train.csv")
 
 #cleaning dataset
-train <- train %>% dplyr::select(-PassengerId,-Name,-Ticket,-Cabin)
+train <- train %>% dplyr::select(-PassengerId,-Ticket,-Cabin)
 n <- length(train$Cabin)
 train <- train[-which(train$Embarked == ""),]
+train <- train %>% mutate(family = SibSp + Parch) %>% dplyr::select(-SibSp,-Parch)
+
+#adding column for class of individual
+n <- length(train$Name)
+empt <- c()
+for (i in 1:n) {
+  if (grepl("Mr.",train$Name[i])) {
+    empt <- c(empt,"Mr")
+  } else if (grepl("Miss",train$Name[i])) {
+    empt <- c(empt,"Miss")
+  } else if (grepl("Mrs",train$Name[i])) {
+    empt <- c(empt,"Mrs")
+  } else if (grepl("Master",train$Name[i])) {
+    empt <- c(empt,"Master")
+  } else {
+    empt <- c(empt,"Rare")
+  }
+}
+train <- train %>% mutate(title = factor(empt)) %>% dplyr::select(-Name)
+
+
+
 
 #mean dataset
 train_mean <- train
