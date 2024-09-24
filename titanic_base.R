@@ -2,6 +2,7 @@ library(tidyverse)
 library(caret)
 library(MASS)
 library(e1071)
+library(randomForest)
 #importing datasets
 train <- read.csv("train.csv")
 
@@ -9,7 +10,7 @@ train <- read.csv("train.csv")
 train <- train %>% dplyr::select(-PassengerId,-Ticket,-Cabin)
 n <- length(train$Cabin)
 train <- train[-which(train$Embarked == ""),]
-train <- train %>% mutate(family = SibSp + Parch) %>% dplyr::select(-SibSp,-Parch)
+train <- train %>% mutate(family = SibSp + Parch + 1) %>% dplyr::select(-SibSp,-Parch)
 
 #adding column for class of individual
 n <- length(train$Name)
@@ -103,6 +104,9 @@ func_binom <- function(training,type,validation) {
   } else if (type == "B") {
     ML_output <- naiveBayes(factor(Survived) ~., data = training)
     pred <- predict(ML_output,newdata = validation)
+  } else if (type == "r") {
+    ML_output <- randomForest(factor(Survived) ~ ., data = split_LOCF$train, importance = TRUE, proximity = TRUE)
+    pred <- predict(ML_output,newdata = validation)
   }
   return(pred)
 }
@@ -154,8 +158,7 @@ shuffle_regress <- as.data.frame(split_regress$shuffle)
 #LOCF 
 split_LOCF <- split(train_L)
 shuffle_LOCF <- as.data.frame(split_LOCF$shuffle)
-(accuracy_LOCF <- cross_val(10,shuffle_LOCF,"b"))
-
+(accuracy_LOCF <- cross_val(10,shuffle_LOCF,"r"))
 
 
 
