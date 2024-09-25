@@ -165,7 +165,7 @@ shuffle <- as.data.frame(splitted$shuffle)
 #pairwise deletion
 split_pair <- split(train_na)
 shuffle_pair <- as.data.frame(split_pair$shuffle)
-(accuracy_pair <- cross_val(10,shuffle_pair,"r")) #has NA values do not use with RF
+#(accuracy_pair <- cross_val(10,shuffle_pair,"r")) #has NA values do not use with RF
 
 #mean imputation
 split_mean <- split(train_mean)
@@ -193,12 +193,12 @@ final_model <- randomForest(factor(Survived) ~ ., data = train_L, importance = T
 
 
 
-control <- trainControl(method = "repeatedcv", number = 10, repeats = 3, search = 'grid')
-rf_random <- train(factor(Survived) ~ ., data = train_L, method = "rf", metric = "Accuracy", 
-                   tuneLength = 15, trControl = control)
+#control <- trainControl(method = "repeatedcv", number = 10, repeats = 3, search = 'grid')
+#rf_random <- train(factor(Survived) ~ ., data = train_L, method = "rf", metric = "Accuracy", 
+#                   tuneLength = 15, trControl = control)
 
 
-plot(rf_random)
+#plot(rf_random)
 
 #test
 test_final <- read.csv("test.csv")
