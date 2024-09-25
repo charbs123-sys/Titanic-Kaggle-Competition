@@ -4,6 +4,7 @@ library(MASS)
 library(e1071)
 library(randomForest)
 library(openxlsx)
+library(gbm)
 #importing datasets
 train <- read.csv("train.csv")
 
@@ -106,12 +107,32 @@ func_binom <- function(training,type,validation) {
     ML_output <- naiveBayes(factor(Survived) ~., data = training)
     pred <- predict(ML_output,newdata = validation)
   } else if (type == "r") {
-    ML_output <- randomForest(factor(Survived) ~ ., data = split_LOCF$train, importance = TRUE, proximity = TRUE)
+    ML_output <- randomForest(factor(Survived) ~ ., data = training, importance = TRUE, proximity = TRUE, ntree = 2000)
     pred <- predict(ML_output,newdata = validation)
+  } else if (type == "gbm") {
+    
+    training$Sex <- factor(training$Sex)
+    training$Embarked <- as.factor(training$Embarked)
+    training$title <- as.factor(training$title)
+    
+    validation$Sex <- factor(validation$Sex)
+    validation$Embarked <- as.factor(validation$Embarked)
+    validation$title <- as.factor(validation$title)
+    
+    ML_output <- gbm(Survived ~ ., data = training, distribution = "bernoulli", 
+                     shrinkage = 0.01, verbose = F, n.trees = 10000, cv.folds = 10)
+    pred <- ifelse(predict(ML_output,newdata = validation, type = "response") > 0.5,1,0)
   }
   return(pred)
 }
 
+
+factoring <- function(shuffle_LOCF) {
+  shuffle_LOCF$Sex <- factor(shuffle_LOCF$Sex)
+  shuffle_LOCF$Embarked <- as.factor(shuffle_LOCF$Embarked)
+  shuffle_LOCF$title <- as.factor(shuffle_LOCF$title)
+  return(shuffle_LOCF)
+}
 
 cross_val <- function(k,tr_shuffle,type){
   #implementing k-fold CV
@@ -144,7 +165,7 @@ shuffle <- as.data.frame(splitted$shuffle)
 #pairwise deletion
 split_pair <- split(train_na)
 shuffle_pair <- as.data.frame(split_pair$shuffle)
-(accuracy_pair <- cross_val(10,shuffle_pair,"r"))
+(accuracy_pair <- cross_val(10,shuffle_pair,"r")) #has NA values do not use with RF
 
 #mean imputation
 split_mean <- split(train_mean)
@@ -163,45 +184,57 @@ shuffle_LOCF <- as.data.frame(split_LOCF$shuffle)
 
 
 
-
-
-
 #retrain model with highest accuracy
 
-#final_model <- randomForest(factor(Survived) ~ ., data = train_L, importance = TRUE, proximity = TRUE)
+final_model <- randomForest(factor(Survived) ~ ., data = train_L, importance = TRUE, proximity = TRUE, ntree = 1500)
+#train_L <- factoring(train_L)
+#final_model <- gbm(Survived ~ ., data = train_L, distribution = "bernoulli", 
+#                   shrinkage = 0.01, verbose = T, n.trees = 20000, cv.folds = 10)
+
+
+
+control <- trainControl(method = "repeatedcv", number = 10, repeats = 3, search = 'grid')
+rf_random <- train(factor(Survived) ~ ., data = train_L, method = "rf", metric = "Accuracy", 
+                   tuneLength = 15, trControl = control)
+
+
+plot(rf_random)
 
 #test
-#test_final <- read.csv("test.csv")
+test_final <- read.csv("test.csv")
 
-#pass_id <- test_final$PassengerId
-#test_final <- test_final %>% dplyr::select(-PassengerId,-Ticket,-Cabin)
-#n <- length(test_final$Cabin)
-#test_final <- test_final %>% mutate(family = SibSp + Parch + 1) %>% dplyr::select(-SibSp,-Parch)
+pass_id <- test_final$PassengerId
+test_final <- test_final %>% dplyr::select(-PassengerId,-Ticket,-Cabin)
+n <- length(test_final$Cabin)
+test_final <- test_final %>% mutate(family = SibSp + Parch + 1) %>% dplyr::select(-SibSp,-Parch)
 
-#n <- length(test_final$Name)
-#empt <- c()
-#for (i in 1:n) {
-#  if (grepl("Mr.",test_final$Name[i])) {
-#    empt <- c(empt,"Mr")
-#  } else if (grepl("Miss",test_final$Name[i])) {
-#    empt <- c(empt,"Miss")
-#  } else if (grepl("Mrs",test_final$Name[i])) {
-#    empt <- c(empt,"Mrs")
-#  } else if (grepl("Master",test_final$Name[i])) {
-#    empt <- c(empt,"Master")
-#  } else {
-#    empt <- c(empt,"Rare")
-#  }
-#}
-#test_final <- test_final %>% mutate(title = factor(empt)) %>% dplyr::select(-Name)
+n <- length(test_final$Name)
+empt <- c()
+for (i in 1:n) {
+  if (grepl("Mr.",test_final$Name[i])) {
+    empt <- c(empt,"Mr")
+  } else if (grepl("Miss",test_final$Name[i])) {
+    empt <- c(empt,"Miss")
+  } else if (grepl("Mrs",test_final$Name[i])) {
+    empt <- c(empt,"Mrs")
+  } else if (grepl("Master",test_final$Name[i])) {
+    empt <- c(empt,"Master")
+  } else {
+    empt <- c(empt,"Rare")
+  }
+}
+test_final <- test_final %>% mutate(title = factor(empt)) %>% dplyr::select(-Name)
 
-#mean_na <- mean(test_final$Age,na.rm = TRUE)
-#test_final$Age[is.na(test_final$Age)] <- mean_na
+mean_na <- mean(test_final$Age,na.rm = TRUE)
+test_final$Age[is.na(test_final$Age)] <- mean_na
 
-#pred_test <- predict(final_model,newdata = test_final)
-#names(pred_test) <- FALSE
-#final_tibble <- data.frame(PassengerId = pass_id,Survived = pred_test)
-#final_tibble[is.na(final_tibble$Survived),2] <- 1
+pred_test <- predict(final_model,newdata = test_final)
 
-#temp_file <- write.xlsx(final_tibble, file = "C:\\Users\\User\\Documents\\kag_tables")
+#pred_test <- ifelse(predict(final_model,newdata = test_final, type = 'response') > 0.5,1,0)
+
+names(pred_test) <- FALSE
+final_tibble <- data.frame(PassengerId = pass_id,Survived = pred_test)
+final_tibble[is.na(final_tibble$Survived),2] <- 0
+
+temp_file <- write.xlsx(final_tibble, file = "C:\\Users\\User\\Documents\\kag_tables")
 
